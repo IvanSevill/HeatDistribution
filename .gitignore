@@ -1,0 +1,23 @@
+# Visual Studio temporary files
+.vs/
+x64/
+x86/
+[Dd]ebug/
+[Rr]elease/
+*.user
+*.suo
+*.db
+*.opendb
+
+# Compilation outputs
+*.exe
+*.obj
+*.pdb
+*.ilk
+*.log
+
+# External libraries (NuGet)
+packages/
+
+# Environment variables
+.env

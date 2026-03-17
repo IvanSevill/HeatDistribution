@@ -30,7 +30,7 @@
     <ClCompile Include="main.cpp">
       <Filter>Archivos de origen</Filter>
     </ClCompile>
-    <ClCompile Include="jacovi.c">
+    <ClCompile Include="jacobi.c">
       <Filter>Archivos de origen\methods</Filter>
     </ClCompile>
     <ClCompile Include="sor.c">

@@ -1,3 +1,4 @@
+// sor
 #include "definitions.h"
 
 double solve_sor(Plate* p) {

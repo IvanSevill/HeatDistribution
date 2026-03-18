@@ -1,3 +1,4 @@
+// jacobi
 #include "definitions.h"
 
 double solve_jacobi(Plate* p) {

@@ -1,15 +1,16 @@
 // gauss-seidel
-
 #include "definitions.h"
-#include <math.h> 
+#include <math.h>
+
 double solve_gauss_seidel(Plate* p) {
     double max_err = 0.0;
     int i, j, color;
 
+    double dx2 = p->dx * p->dx;
+
 #pragma omp parallel private(i, j, color)
     {
         double local_err = 0.0;
-
         for (color = 0; color < 2; color++) {
 #pragma omp for nowait
             for (i = 1; i < GRID_SIZE - 1; i++) {
@@ -17,22 +18,17 @@ double solve_gauss_seidel(Plate* p) {
                     if ((i + j) % 2 == color) {
                         double old_val = p->T[i][j];
 
-                        p->T[i][j] = 0.25 * (p->T[i - 1][j] + p->T[i + 1][j] + p->T[i][j - 1] + p->T[i][j + 1]);
+                        p->T[i][j] = 0.25 * (p->T[i - 1][j] + p->T[i + 1][j] + p->T[i][j - 1] + p->T[i][j + 1] - (dx2 * p->f[i][j]));
 
                         double diff = fabs(p->T[i][j] - old_val);
                         if (diff > local_err) local_err = diff;
                     }
                 }
             }
-            
 #pragma omp barrier
         }
-
 #pragma omp critical
-        {
-            if (local_err > max_err) max_err = local_err;
-        }
+        { if (local_err > max_err) max_err = local_err; }
     }
-
     return max_err;
 }

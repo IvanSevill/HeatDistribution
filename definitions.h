@@ -12,16 +12,20 @@
 
 typedef enum { METHOD_JACOBI, METHOD_SOR, METHOD_GAUSS_SEIDEL } SolveMethod;
 typedef enum { STATE_CONFIG, STATE_SIMULATING, STATE_FINISHED } AppState;
+typedef enum { EQ_LAPLACE, EQ_POISSON } EquationType;
 
 
 typedef struct {
     double temp_up, temp_down, temp_left, temp_right;
     double** T;
     double** T_new;
+    double** f;
+    double dx;
     SolveMethod method;
     double omega;
     double threshold;
     int num_threads;
+    EquationType eq_type;
 } Plate;
 
 #ifdef __cplusplus

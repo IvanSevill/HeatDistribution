@@ -36,7 +36,8 @@ void run_headless_simulation(Plate* p) {
 int main(int argc, char* argv[]) {
     // 1. Initial Defaults
     int max_phys_threads = omp_get_max_threads();
-    Plate p = { 100.0, 0.0, 0.0, 0.0, NULL, NULL, METHOD_JACOBI, 1.7, 0.001, max_phys_threads };
+    Plate p = { 100.0, 0.0, 0.0, 0.0, NULL, NULL, NULL, 0.1, METHOD_JACOBI, 1.7, 0.001, max_phys_threads, EQ_LAPLACE };
+    p.eq_type = EQ_LAPLACE;
     bool use_gui = true;
 
     // 2. Parse Command Line Arguments
@@ -61,6 +62,12 @@ int main(int argc, char* argv[]) {
 
         if (strcmp(argv[i], "--omega") == 0 && i + 1 < argc) {
             p.omega = atof(argv[++i]);
+        }
+
+        if (strcmp(argv[i], "--equation") == 0 && i + 1 < argc) {
+            i++;
+            if (_stricmp(argv[i], "POISSON") == 0) p.eq_type = EQ_POISSON;
+            else p.eq_type = EQ_LAPLACE;
         }
     }
 
@@ -102,6 +109,11 @@ int main(int argc, char* argv[]) {
             if (IsKeyDown(KEY_LEFT_SHIFT)) {
                 if (IsKeyDown(KEY_Z)) p.temp_up -= 2; if (IsKeyDown(KEY_X)) p.temp_down -= 2;
                 if (IsKeyDown(KEY_C)) p.temp_left -= 2; if (IsKeyDown(KEY_V)) p.temp_right -= 2;
+            }
+            DrawText(TextFormat("5. Equation: %s (F)", (p.eq_type == EQ_LAPLACE ? "LAPLACE" : "POISSON")), 50, 300, 20, RED);
+            if (IsKeyPressed(KEY_F)) {
+                if (p.eq_type == EQ_LAPLACE) p.eq_type = EQ_POISSON;
+                else p.eq_type = EQ_LAPLACE;
             }
             DrawRectangle(150, 450, 300, 60, DARKGREEN);
             DrawText("PRESS [ENTER] TO START", 185, 470, 20, RAYWHITE);

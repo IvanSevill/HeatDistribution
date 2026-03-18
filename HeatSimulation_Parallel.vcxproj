@@ -130,7 +130,7 @@
   <ItemGroup>
     <ClCompile Include="data.c" />
     <ClCompile Include="definitions.h" />
-    <ClCompile Include="jacobi.c" />
+    <ClCompile Include="jacovi.c" />
     <ClCompile Include="logic.c" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="sor.c" />

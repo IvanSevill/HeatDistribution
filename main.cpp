@@ -3,8 +3,11 @@
 #include <string.h>
 
 void run_headless_simulation(Plate* p) {
+    const char* method_name = (p->method == METHOD_JACOBI) ? "Jacobi" :
+        (p->method == METHOD_SOR) ? "SOR" : "Gauss-Seidel";
+
     printf("\n[BENCHMARK] Method: %s | Threads: %d | Goal: %.10f\n",
-        (p->method == METHOD_JACOBI ? "Jacobi" : "SOR"), p->num_threads, p->threshold);
+        method_name, p->num_threads, p->threshold);
 
     omp_set_num_threads(p->num_threads);
     init_plate(p);
@@ -46,7 +49,9 @@ int main(int argc, char* argv[]) {
         }
 
         if (strcmp(argv[i], "--method") == 0 && i + 1 < argc) {
-            if (_stricmp(argv[++i], "SOR") == 0) p.method = METHOD_SOR;
+            i++; 
+            if (_stricmp(argv[i], "SOR") == 0) p.method = METHOD_SOR;
+            else if (_stricmp(argv[i], "GAUSS") == 0) p.method = METHOD_GAUSS_SEIDEL;
             else p.method = METHOD_JACOBI;
         }
 
@@ -75,24 +80,28 @@ int main(int argc, char* argv[]) {
 
     while (!WindowShouldClose()) {
         if (current_state == STATE_CONFIG) {
+            const char* gui_method_name = (p.method == METHOD_JACOBI) ? "JACOBI" :
+                (p.method == METHOD_SOR) ? "SOR" : "GAUSS-SEIDEL";
+
             BeginDrawing();
             ClearBackground(RAYWHITE);
             DrawText("SIMULATION PARAMETERS", 140, 40, 25, DARKGRAY);
-            DrawText(TextFormat("1. Method: %s (J/S)", (p.method == METHOD_JACOBI ? "JACOBI" : "SOR")), 50, 100, 20, BLACK);
-            if (IsKeyPressed(KEY_J)) p.method = METHOD_JACOBI;
+            DrawText(TextFormat("1. Method: %s (J/S/G)", gui_method_name), 50, 100, 20, BLACK);
+            if (IsKeyPressed(KEY_J)) p.method = METHOD_JACOBI;          
             if (IsKeyPressed(KEY_S)) p.method = METHOD_SOR;
+            if (IsKeyPressed(KEY_G)) p.method = METHOD_GAUSS_SEIDEL; 
             DrawText(TextFormat("2. Target Error: %.5f (Q/E)", p.threshold), 50, 150, 20, BLACK);
             if (IsKeyPressed(KEY_E)) p.threshold /= 10.0;
             if (IsKeyPressed(KEY_Q)) p.threshold *= 10.0;
             DrawText(TextFormat("3. Threads: %d (+/-)", p.num_threads), 50, 200, 20, DARKBLUE);
             if (IsKeyPressed(KEY_KP_ADD) || IsKeyPressed(KEY_PERIOD)) { if (p.num_threads < max_phys_threads) p.num_threads++; }
             if (IsKeyPressed(KEY_KP_SUBTRACT) || IsKeyPressed(KEY_COMMA)) { if (p.num_threads > 1) p.num_threads--; }
-            DrawText(TextFormat("4. Temps: U:%.0f D:%.0f L:%.0f R:%.0f", p.temp_up, p.temp_down, p.temp_left, p.temp_right), 50, 250, 20, MAROON);
-            if (IsKeyDown(KEY_W)) p.temp_up += 1; if (IsKeyDown(KEY_S)) p.temp_down += 1;
-            if (IsKeyDown(KEY_A)) p.temp_left += 1; if (IsKeyDown(KEY_D)) p.temp_right += 1;
+            DrawText(TextFormat("4. Temps: U:%.0f D:%.0f L:%.0f R:%.0f (ZXCV)", p.temp_up, p.temp_down, p.temp_left, p.temp_right), 50, 250, 20, MAROON);
+            if (IsKeyDown(KEY_Z)) p.temp_up += 1; if (IsKeyDown(KEY_X)) p.temp_down += 1;
+            if (IsKeyDown(KEY_C)) p.temp_left += 1; if (IsKeyDown(KEY_V)) p.temp_right += 1;
             if (IsKeyDown(KEY_LEFT_SHIFT)) {
-                if (IsKeyDown(KEY_W)) p.temp_up -= 2; if (IsKeyDown(KEY_S)) p.temp_down -= 2;
-                if (IsKeyDown(KEY_A)) p.temp_left -= 2; if (IsKeyDown(KEY_D)) p.temp_right -= 2;
+                if (IsKeyDown(KEY_Z)) p.temp_up -= 2; if (IsKeyDown(KEY_X)) p.temp_down -= 2;
+                if (IsKeyDown(KEY_C)) p.temp_left -= 2; if (IsKeyDown(KEY_V)) p.temp_right -= 2;
             }
             DrawRectangle(150, 450, 300, 60, DARKGREEN);
             DrawText("PRESS [ENTER] TO START", 185, 470, 20, RAYWHITE);

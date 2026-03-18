@@ -42,10 +42,13 @@ void save_results_to_csv(Plate* p, int iterations, double final_error, double ti
     char* date = ctime(&now);
     date[strlen(date) - 1] = '\0';
 
+    const char* method_name = (p->method == METHOD_JACOBI) ? "Jacobi" :
+        (p->method == METHOD_SOR) ? "SOR" : "Gauss-Seidel";
+
     fprintf(f, "%s,%s,%d,%d,%.2f,%.6f,%d,%.8f,%.4f\n",
         date,
-        (p->method == METHOD_SOR ? "SOR" : "Jacobi"),
-        GRID_SIZE,      
+        method_name, 
+        GRID_SIZE,
         p->num_threads,
         p->omega,
         p->threshold,

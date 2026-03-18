@@ -130,7 +130,6 @@
   <ItemGroup>
     <ClCompile Include="data.c" />
     <ClCompile Include="definitions.h" />
-    <ClCompile Include="gauss-seidel.c" />
     <ClCompile Include="jacovi.c" />
     <ClCompile Include="logic.c" />
     <ClCompile Include="main.cpp" />

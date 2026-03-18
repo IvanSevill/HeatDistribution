@@ -36,6 +36,9 @@
     <ClCompile Include="sor.c">
       <Filter>Archivos de origen\methods</Filter>
     </ClCompile>
+    <ClCompile Include="gauss-seidel.c">
+      <Filter>Archivos de origen\methods</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

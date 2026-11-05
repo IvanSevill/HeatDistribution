@@ -1,26 +1,39 @@
 # HeatDistribution
 
-Simulates steady-state heat on a square 48x48 plate, using OpenMP solvers and an optional Raylib window that shows the plate converge.
+Simulates steady-state heat on a square plate (48x48 by default), using OpenMP solvers and an optional Raylib window that shows the plate converge.
 
 - **Compare solvers on the same problem.** Jacobi, Gauss-Seidel (red-black), and SOR (red-black) run on one grid, so iteration counts and times are directly comparable.
 - **Watch it converge.** The window colors each cell from blue to red and shows time, iterations, and current error.
 - **Try setups without recompiling.** Change the method, target error, thread count, edge temperatures, and equation from the keyboard.
 - **Add a heat source.** Switch from Laplace to Poisson to heat an 8x8 block in the center of the plate.
-- **Keep a record of each run.** Every finished run appends one row to `simulation_results.csv` in the working directory.
+- **Keep a record of each run.** Every converged run appends one row to `simulation_results.csv` in the working directory.
 
 ## Build and run
 
-The project targets Windows, using Visual Studio 2022 (toolset v143) and the raylib 5.5.0 NuGet package.
+### Windows, with the window
+
+The project targets Visual Studio 2022 (toolset v143) and the raylib 5.5.0 NuGet package.
 
 1. Open `HeatSimulation_Parallel.sln` and restore NuGet packages.
-2. Select **Debug | x64**. It is the only configuration with OpenMP enabled.
+2. Select **Release | x64**. Every configuration has OpenMP enabled; Release is the one to time.
 3. Build, then run:
 
 ```bat
-.\x64\Debug\HeatSimulation_Parallel.exe
+.\x64\Release\HeatSimulation_Parallel.exe
 ```
 
 These Windows steps come from the project files and have not been run; see [Status and limits](#status-and-limits).
+
+### Linux, headless
+
+Needs GCC or Clang with OpenMP, and no Raylib. This build has no window.
+
+```bash
+make
+./build/heat --no-gui --method SOR --threads 1 --threshold 0.00001
+```
+
+Use `make GRID_SIZE=512 BUILD_DIR=build/512` for another grid size.
 
 ## Usage
 
@@ -45,44 +58,72 @@ HeatSimulation_Parallel.exe --no-gui --method SOR --threads 1 --threshold 0.0000
 ```text
 [BENCHMARK] Method: SOR | Threads: 1 | Goal: 0.0000100000
 
-[DONE] Converged in 443 iterations. Time: 0.0051s
+[DONE] Converged in 443 iterations. Time: 0.0032s
 ```
 
 | Option | Values | Default |
 |--------|--------|---------|
 | `--no-gui` | Run without a window | Window on |
-| `--method` | `SOR`, `GAUSS`; anything else means Jacobi | Jacobi |
-| `--threads` | 1 to the OpenMP maximum; other values are ignored | OpenMP maximum |
-| `--threshold` | Stop when the largest change in one step is at or below this | `0.001` |
-| `--omega` | SOR relaxation factor | `1.7` |
-| `--equation` | `POISSON`; anything else means Laplace | Laplace |
+| `--method` | `JACOBI`, `SOR`, `GAUSS`, `GAUSS-SEIDEL`, in any case | Jacobi |
+| `--threads` | 1 or more; above the OpenMP maximum uses the maximum, with a warning | OpenMP maximum |
+| `--threshold` | Above 0. Stop when the largest change in one sweep is at or below this | `0.001` |
+| `--omega` | SOR relaxation factor, between 0 and 2, exclusive | `1.7` |
+| `--equation` | `LAPLACE`, `POISSON`, in any case | Laplace |
+| `--max-iter` | Give up after this many sweeps | `10000000` |
+| `--help` | Show the options | |
 
-Headless runs always use a top edge of 100 and the other edges at 0. `--method Gauss-Seidel` runs Jacobi without warning: use `GAUSS`.
+Headless runs always use a top edge of 100 and the other edges at 0.
 
-`tests.bat` is a benchmark loop over Jacobi and SOR at 1, 2, 4, 8, and 16 threads. It contains no assertions.
+The exit code is `0` when the run converged, `1` when it reached `--max-iter`, and `2` for an invalid option or value, such as an unknown method. Only converged runs are added to `simulation_results.csv`, which git ignores.
+
+## Tests
+
+```bash
+make test
+```
+
+- `tests/test_solvers.c` checks the solvers against exact solutions of the discrete Laplace and Poisson equations, hand-computed first sweeps, and iteration counts from before the parallel rewrite. It also checks that results are bit-identical at 1, 2, 3, and 8 threads.
+- `tests/test_cli.sh` checks that each method name runs that method, and that invalid input exits with `2`, simulates nothing, and writes nothing.
+
+On Windows, `tests.bat` runs each method at 1, 2, 4, 8, and 16 threads against the Release build, and fails if a method, an iteration count, or an exit code is wrong. Pass `/nopause` when running it from a script.
 
 ## Measured results
 
-Headless Laplace, threshold `0.00001`, omega `1.7`. Each time is the median of 7 runs.
+These figures come from `scripts/benchmark.sh` (`make benchmark`). Each is the median of 7 headless runs, on Linux with an Intel Core Ultra 7 355 (4 cores at up to 2.3 GHz and 4 at up to 1.7 GHz, as reported by `lscpu`) and GCC 16.2 `-O2`. Other work was running on the machine (load average 3 to 4), so differences of about 20% or less mean little. "Before" is commit `e4228a1`. They are not figures for the Visual Studio build, whose OpenMP runtime is different. Expect different times on other machines.
+
+**On the default grid, more threads are slower.** Laplace, grid 48, threshold `0.00001`, omega `1.7`, in seconds. Thread count never changes the iterations or the result.
 
 | Method | Iterations | 1 thread | 2 threads | 4 threads | 8 threads |
 |--------|-----------:|---------:|----------:|----------:|----------:|
-| SOR | 443 | 0.0051 s | 0.0104 s | 0.0201 s | 0.0350 s |
-| Gauss-Seidel | 2194 | 0.0230 s | 0.0486 s | 0.0816 s | 0.1794 s |
-| Jacobi | 4076 | 0.0261 s | 0.0970 s | 0.1521 s | 0.3195 s |
+| SOR, before | 443 | 0.0050 | 0.0098 | 0.0162 | 0.0291 |
+| SOR, now | 443 | 0.0032 | 0.0083 | 0.0080 | 0.0154 |
+| Gauss-Seidel, before | 2194 | 0.0195 | 0.0470 | 0.0790 | 0.1500 |
+| Gauss-Seidel, now | 2194 | 0.0173 | 0.0284 | 0.0374 | 0.0681 |
+| Jacobi, before | 4076 | 0.0327 | 0.1021 | 0.1490 | 0.2740 |
+| Jacobi, now | 4076 | 0.0255 | 0.0444 | 0.0346 | 0.0653 |
 
-**Source:** observed on 2026-11-04 on Linux with an Intel Core Ultra 7 355 (8 logical CPUs) and GCC 16.2 `-O2`. That build replaced Raylib with a stub, so these are not figures for the Visual Studio build. Expect different times on other machines.
+**Larger grids do benefit.** SOR, fixed number of sweeps, in microseconds per sweep. Speedup is against the same code at 1 thread.
 
-**What this shows:** SOR needs about 9 times fewer iterations than Jacobi. On this small grid, adding threads made every method slower, so the run did not show any parallel speedup.
+| Grid | 1 thread | 2 threads | 4 threads | 8 threads | Best speedup | 8 threads, before |
+|------|---------:|----------:|----------:|----------:|-------------:|------------------:|
+| 48 | 6.9 | 11.7 | 17.7 | 33.8 | none | 67.9 |
+| 128 | 43.5 | 50.5 | 40.7 | 45.4 | about none | 87.1 |
+| 512 | 776.5 | 409.6 | 226.8 | 279.5 | 3.4x at 4 threads | 401.9 |
+| 2048 | 13778.7 | 7251.1 | 3812.8 | 3029.8 | 4.5x at 8 threads | 4343.5 |
+
+**Why the small grid does not speed up.** A SOR sweep of the 48x48 grid takes about 7 microseconds of work, while one barrier among 8 threads measured about 19 microseconds with GCC's default OpenMP settings and about 2.7 with `OMP_WAIT_POLICY=active`. Red-black solvers need two barriers per sweep, so the waiting costs more than the work it splits. This is inherent to a grid this small.
+
+**What was fixed.** Each sweep used to start a parallel region and synchronize at least three times. A solve now keeps one region open and synchronizes once per color (once per sweep for Jacobi), swaps the Jacobi buffers instead of copying them, and visits only the cells of each color. Dynamic scheduling keeps the slower cores from holding the others back at each barrier.
+
+**What was not the cause.** Padding the per-thread error values to separate cache lines and allocating the grid as one contiguous block made no measurable difference, so false sharing is not the problem here, and neither change was kept.
+
+**To go further on Linux,** `OMP_WAIT_POLICY=active` makes threads spin at barriers instead of sleeping, which reduces the time at 2 and 4 threads in some runs but keeps those CPUs busy. It did not make the default grid faster than 1 thread.
 
 ## Status and limits
 
 This is a small coursework-style project, not a general solver.
 
-- **Not verified on Windows.** The Visual Studio build and the window have not been run for this README. The solvers and headless mode were compiled and run on Linux as described above.
-- **Windows only as shipped.** `main.cpp` uses MSVC's `_stricmp`, and the repository has no Linux build files. Building with real Raylib on Linux has not been tried.
-- **Fixed problem size.** `GRID_SIZE` (48) is a compile-time constant and `dx` is fixed at 0.1.
-- **Window times are not solver times.** The window runs one solver step per frame at 60 FPS, so its time mostly measures frame rate. Use `--no-gui` for timing. The one data row in the committed `simulation_results.csv` (917 iterations, 15.28 s) matches 917 frames at 60 FPS.
+- **Not verified on Windows.** The Visual Studio build, `tests.bat`, and the window have not been run since these changes. The window code was only compiled against a stub of Raylib. The solvers, tests, and headless mode were built and run on Linux as described above.
+- **Fixed problem setup.** `GRID_SIZE` (48) is a compile-time constant and `dx` is fixed at 0.1. The window cannot draw grids above 600 cells per side, because a cell would be under one pixel.
+- **Window times are not comparable with headless times.** The window runs one solver step per frame at 60 FPS. It now records only the time inside the solver, but each step starts with cold caches and sleeping threads. Use `--no-gui` for timing.
 - **Poisson colors saturate.** Colors clip at 100, while the Poisson run reached about 2278 at the center, so the heated area displays as flat red.
-- **Stale CSV header.** The committed `simulation_results.csv` header has no `Equation` column, so its data row has one field more than its header. A new file gets the correct header.
-- **No automated tests.**

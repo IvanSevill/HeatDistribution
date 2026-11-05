@@ -9,7 +9,7 @@ set OMEGA=1.7
 set OUTPUT=%TEMP%\heat_tests_%RANDOM%.txt
 set FAILED=0
 
-if not exist "%EXE_PATH%" (echo %EXE_PATH% not found: build the Release ^|^ x64 configuration first & exit /b 1)
+if not exist "%EXE_PATH%" (echo %EXE_PATH% not found: build the Release x64 configuration first & exit /b 1)
 
 echo ==================================================
 echo   BENCHMARK AND CHECKS (Goal: %THRESHOLD%)

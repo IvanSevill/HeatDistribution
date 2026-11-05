@@ -1,2 +1,0 @@
-Timestamp,Method,Grid_Size,Threads,Omega,Threshold,Iterations,Final_Error,Execution_Time_Sec
-Wed Mar 18 17:29:06 2026,Poisson,Gauss-Seidel,48,12,1.70,0.100000,917,0.09980780,15.2834

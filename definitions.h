@@ -11,6 +11,9 @@
 #define GRID_SIZE 48
 #endif
 #define WINDOW_SIZE 600
+// Rows a thread takes at a time. Small enough for every thread to get work on small grids,
+// larger on big grids where a thread taking rows more often costs more than it balances.
+#define ROW_CHUNK (GRID_SIZE < 256 ? 4 : 16)
 
 typedef enum { METHOD_JACOBI, METHOD_SOR, METHOD_GAUSS_SEIDEL } SolveMethod;
 typedef enum { STATE_CONFIG, STATE_SIMULATING, STATE_FINISHED } AppState;

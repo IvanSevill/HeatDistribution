@@ -6,11 +6,12 @@ double sweep_sor(Plate* p) {
     int i, j, color;
 
     double dx2 = p->dx * p->dx;
+    int chunk = ROW_CHUNK;
     double omega = p->omega;
     double** T = p->T;
 
     for (color = 0; color < 2; color++) {
-#pragma omp for schedule(dynamic, 16) nowait
+#pragma omp for schedule(dynamic, chunk) nowait
         for (i = 1; i < GRID_SIZE - 1; i++) {
             const double* up = T[i - 1];
             const double* down = T[i + 1];

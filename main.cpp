@@ -4,6 +4,7 @@
 #endif
 #include <string.h>
 #include <limits.h>
+#include <errno.h>
 #include <cmath>
 
 #ifndef _WIN32
@@ -32,8 +33,9 @@ static void print_usage(FILE* out) {
 
 static bool parse_int(const char* text, int* value) {
     char* end;
+    errno = 0;
     long parsed = strtol(text, &end, 10);
-    if (end == text || *end != '\0' || parsed < INT_MIN || parsed > INT_MAX) return false;
+    if (end == text || *end != '\0' || errno == ERANGE || parsed < INT_MIN || parsed > INT_MAX) return false;
     *value = (int)parsed;
     return true;
 }

@@ -4,6 +4,8 @@ CC ?= gcc
 CXX ?= g++
 GRID_SIZE ?= 48
 BUILD_DIR ?= build
+# A concurrency bug can show up as a hang, so tests have a time limit.
+TEST_TIMEOUT ?= timeout 300
 FLAGS = -O2 -Wall -Wextra -fopenmp -I. -DGRID_SIZE=$(GRID_SIZE) -DHEAT_NO_GUI
 
 SOLVER_SOURCES = data.c logic.c jacobi.c gauss-seidel.c sor.c
@@ -30,8 +32,8 @@ $(BUILD_DIR):
 	mkdir -p $@
 
 test: $(BUILD_DIR)/heat $(BUILD_DIR)/test_solvers
-	$(BUILD_DIR)/test_solvers
-	bash tests/test_cli.sh $(BUILD_DIR)/heat
+	$(TEST_TIMEOUT) $(BUILD_DIR)/test_solvers
+	$(TEST_TIMEOUT) bash tests/test_cli.sh $(BUILD_DIR)/heat
 
 benchmark:
 	bash scripts/benchmark.sh

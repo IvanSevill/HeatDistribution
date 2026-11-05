@@ -6,8 +6,9 @@ double sweep_jacobi(Plate* p, double** src, double** dst) {
     int i, j;
 
     double dx2 = p->dx * p->dx;
+    int chunk = ROW_CHUNK;
 
-#pragma omp for schedule(dynamic, 16) nowait
+#pragma omp for schedule(dynamic, chunk) nowait
     for (i = 1; i < GRID_SIZE - 1; i++) {
         const double* up = src[i - 1];
         const double* row = src[i];

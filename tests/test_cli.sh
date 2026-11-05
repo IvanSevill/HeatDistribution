@@ -65,6 +65,7 @@ expect_rejected "invalid value '0' for --threshold" --threshold 0
 expect_rejected "invalid value 'abc' for --threshold" --threshold abc
 expect_rejected "invalid value '2.5' for --omega" --omega 2.5
 expect_rejected "invalid value '0' for --max-iter" --max-iter 0
+expect_rejected "invalid value '99999999999999999999' for --max-iter" --max-iter 99999999999999999999
 expect_rejected "unknown option '--methd'" --methd SOR
 expect_rejected "--method needs a value" --method
 

@@ -7,7 +7,9 @@
 #include <omp.h>
 #include <string.h>
 
+#ifndef GRID_SIZE
 #define GRID_SIZE 48
+#endif
 #define WINDOW_SIZE 600
 
 typedef enum { METHOD_JACOBI, METHOD_SOR, METHOD_GAUSS_SEIDEL } SolveMethod;
@@ -34,10 +36,18 @@ extern "C" {
 
     void init_plate(Plate* p);
     void free_plate(Plate* p);
+    // Runs up to max_iterations sweeps inside one parallel region and stops early once
+    // the largest change in a sweep is at or below p->threshold. Returns the sweeps run.
+    int solver_run(Plate* p, int max_iterations, double* final_error);
+    // Runs one sweep and returns its largest change.
     double solver_step(Plate* p);
-    double solve_jacobi(Plate* p);
-    double solve_sor(Plate* p);
-    double solve_gauss_seidel(Plate* p);
+    // Per-thread sweeps: call from inside a parallel region. Each returns the largest change
+    // in the cells this thread updated and leaves the final barrier to the caller.
+    // Rows are scheduled dynamically so slower cores on hybrid CPUs do not hold the team at
+    // each barrier; which thread updates a row does not affect the result.
+    double sweep_jacobi(Plate* p, double** src, double** dst);
+    double sweep_sor(Plate* p);
+    double sweep_gauss_seidel(Plate* p);
     void save_results_to_csv(Plate* p, int iterations, double final_error, double time_seconds);
 
 #ifdef __cplusplus
